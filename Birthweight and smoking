@@ -1,0 +1,268 @@
+/* Generated Code (IMPORT) */
+/* Source File: birthweight_smoking.xlsx */
+/* Source Path: /home/nixc0/ECON419 */
+/* Code generated on: Thursday, April 28, 2016 8:40:12 PM */
+
+%web_drop_table(WORK.IMPORT2);
+
+
+FILENAME REFFILE "/home/nixc0/ECON419/birthweight_smoking.xlsx" TERMSTR=CR;
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=XLSX
+	OUT=WORK.IMPORT2;
+	GETNAMES=YES;
+RUN;
+
+PROC CONTENTS DATA=WORK.IMPORT2; RUN;
+
+
+%web_open_table(WORK.IMPORT2);
+
+/* Question 1 */
+
+/* (i) */
+
+/*
+data work.birthweight;
+	set work.import1;
+	if smoker = 1 
+	then smokeweight = birthweight;
+	else nonsmokeweight = birthweight;
+run;
+
+	
+proc means data=work.birthweight;
+	var smokeweight nonsmokeweight;
+	title1 'Basic Statistics for Birthweight for Smoking and Non-Smoking Mothers';
+	label smokeweight="Baby weight: Mother smokes" 
+	nonsmokeweight="Baby weight: Mother is nonsmoker" 
+	title1;
+run;
+*/
+
+proc means data=work.import1;
+	title1 'Basic Statistics for Birthweight for Smoking and Non-Smoking Mothers';
+	class smoker;
+	var birthweight;
+	title1;
+run;
+
+proc reg data=birthweight;
+	model birthweight = smoker;
+	output out=work.birthweight;
+run;
+
+/* (vi) */
+
+proc reg data=birthweight;
+	model birthweight = smoker alcohol tripre0 tripre1 tripre2 tripre3
+	/collin;
+	output out=work.birthweight;
+run;
+
+proc reg data=birthweight;
+	model birthweight = smoker alcohol tripre1 tripre2 tripre3;
+	output out=work.birthweight;
+run;
+
+
+/* Breusch-Pagan Test */
+
+/* Getting residuals */
+proc reg data=work.birthweight;
+	model birthweight = smoker alcohol tripre1 tripre2 tripre3
+	/acov;
+	output out=work.resdat_ols residual=uhat_ols predicted=yhat_ols;
+run;
+
+/* Making a variable for the residuals squared */
+
+data work.resdat_ols_new;
+  set work.resdat_ols;
+  yhat2 = yhat_ols**2;
+  uhat2 = uhat_ols**2;
+run;
+
+
+/* Regressing the residuals squared on the variables that appear to be heteroskedastic */
+proc reg data=work.resdat_ols_new;
+  model uhat2 = alcohol tripre3;
+  test tripre3 = alcohol = 0;
+run;
+
+/* I tested alcohol by itself just to be sure
+proc reg data=work.resdat_ols_new;
+  model uhat2 = alcohol;
+  test alcohol = 0;
+run;
+*/
+
+/* Alternate White test */
+proc reg data=work.resdat_ols_new;
+  model uhat2 = yhat_ols yhat2;
+  test yhat_ols = yhat2 = 0;
+run;
+
+/* viii */
+proc reg data=work.birthweight;
+	model birthweight = smoker alcohol tripre1 tripre2 tripre3
+	/acov;
+	test tripre1 = tripre2 = tripre3 = 0;
+	output out=work.birthweight;
+run;
+
+/* ix */
+proc reg data=work.birthweight;
+	model birthweight = smoker alcohol tripre1 tripre2 tripre3 unmarried
+	/acov;
+	output out=work.birthweight;
+run;
+
+/* Question 2 */
+
+/* Generated Code (IMPORT) */
+/* Source File: Smoking_question2.xlsx */
+/* Source Path: /home/nixc0/ECON419 */
+/* Code generated on: Friday, April 29, 2016 10:20:50 PM */
+
+%web_drop_table(WORK.IMPORT);
+
+
+FILENAME REFFILE "/home/nixc0/ECON419/Smoking_question2.xlsx" TERMSTR=CR;
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=XLSX
+	OUT=WORK.IMPORT;
+	GETNAMES=YES;
+RUN;
+
+PROC CONTENTS DATA=WORK.IMPORT; RUN;
+
+
+%web_open_table(WORK.IMPORT);
+
+/* Sorting data by decending order, because we are interested in when y = 1 */
+proc sort data=work.import;
+by decending smoker;
+run;
+
+/* i */
+
+proc reg data=work.import;
+	model smoker = smkban
+	/ acov;
+	output out=work.smoking;
+run;
+
+/* ii */
+
+data work.import;
+	set work.import;
+	age2 = age*age;
+run:
+
+proc reg data=work.import;
+	model smoker = smkban female age age2 hsdrop hsgrad colgrad black hispanic
+	/ acov collin;
+	output out=work.smoking;
+run;
+
+/* iii */
+
+/* Estimating the model by Probit */
+
+proc logistic data=work.import order=data outest=work.probit_param;
+	model  smoker = smkban female age age2 hsdrop hsgrad colgrad black hispanic
+	/link=normit;
+	output out=work.probitprobs p=probit_phat;
+run;
+
+
+/* iv */
+
+proc logistic data=work.import order=data outest=work.logit_param;
+	model  smoker = smkban female age age2 hsdrop hsgrad colgrad black hispanic
+	/link=logit;
+	output out=work.logitprobs p=logit_phat;
+run;
+
+
+/* Question 3 */
+
+/* Generated Code (IMPORT) */
+/* Source File: income_democracy_finalquestion3.xlsx */
+/* Source Path: /home/nixc0/ECON419 */
+/* Code generated on: Saturday, April 30, 2016 12:34:21 AM */
+
+%web_drop_table(WORK.IMPORT3);
+
+
+FILENAME REFFILE "/home/nixc0/ECON419/income_democracy_finalquestion3.xlsx" TERMSTR=CR;
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=XLSX
+	OUT=WORK.IMPORT3;
+	GETNAMES=YES;
+RUN;
+
+PROC CONTENTS DATA=WORK.IMPORT3; RUN;
+
+
+%web_open_table(WORK.IMPORT3);
+
+/* ii */
+
+
+proc means data=work.import3;
+	class country;
+	var dem_ind;
+run;
+
+/* iii */
+
+/* Creating a table of average dem_ind */
+proc means data=work.import3;
+	class country;
+	var dem_ind;
+	output out=work.averages(drop= _TYPE_ _FREQ_) mean=mdem_ind;
+run;
+
+data work.group1;
+	set work.averages;
+	where mdem_ind = 1;
+	keep country mdem_ind;
+run;
+
+data work.group2;
+	set work.averages;
+	where mdem_ind < .1;
+	keep country mdem_ind;
+run;
+
+
+/* iv */
+
+proc panel data=work.import3;
+	id country year;
+	model dem_ind = log_gdppc
+	/ pooled ;
+run;
+	
+/* vi */
+
+proc panel data=work.import3;
+	id country year;
+	model dem_ind = log_gdppc log_pop age_1 age_2 age_3 age_4 educ age_median
+	/ fixone;
+	test log_pop = age_1 = age_2 = age_3 = age_4 = educ = age_median = 0;
+run;	
+
+*/ viii */ 
+proc panel data=work.import3;
+	id country year;
+	model dem_ind = log_gdppc log_pop age_1 age_2 age_3 age_4 educ age_median
+	/ fixtwo;
+	test log_pop = age_1 = age_2 = age_3 = age_4 = educ = age_median = 0;
+run;	
+	
